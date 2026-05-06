@@ -1,0 +1,113 @@
+# DBL PC TSO Package - Configuration Template
+# 
+# This file specifies all parameters for running the analysis.
+# Modify the values below for your specific use case.
+
+# ============================================================================
+# [data] - Data files and object information
+# ============================================================================
+[data]
+# Path to the time_series_spectra H5 file (REQUIRED)
+# This file should contain: time, eureka_wave_1d, and flux arrays
+h5_path = "/path/to/ZTFJ0038+2030_PRISM_time_series_spectra.h5"
+
+# Object name (for file naming and logging)
+object_name = "ZTFJ0038+2030"
+
+# Instrument (typically PRISM or GRISM)
+instrument = "PRISM"
+
+
+# ============================================================================
+# [observational_parameters] - Published orbital parameters
+# ============================================================================
+[observational_parameters]
+# Published orbital period (in days)
+# Used as fixed period in some models and as initial guess in others
+P_published = 0.4319208
+
+# Published ephemeris time t0 (in BJD)
+# Will be propagated to observation epoch automatically
+t0_published = 59045.485194
+
+
+# ============================================================================
+# [wavelength_binning] - Wavelength extraction mode
+# ============================================================================
+[wavelength_binning]
+# Binning mode: "broadband", "n_bins", or "custom_regions"
+#
+# broadband:  Extract flux across entire wavelength range
+# n_bins:     Divide wavelength range into N equally-spaced bins
+# custom_regions: Specify custom wavelength regions (see regions parameter)
+#
+mode = "broadband"
+
+# For "n_bins" mode: number of evenly-spaced wavelength bins
+n_bins = 1
+
+# Minimum wavelength (microns) - used for n_bins mode
+# Should match H5 file coverage
+wave_min = 4.5
+
+# Maximum wavelength (microns) - used for n_bins mode
+# Should match H5 file coverage
+wave_max = 5.0
+
+# For "custom_regions" mode: list of wavelength regions
+# Format: [["Region Name", wave_min, wave_max], ...]
+# Uncomment to use, or leave commented if using broadband/n_bins mode
+# regions = [
+#     ["Dayside", 4.50, 4.60],
+#     ["Terminator", 4.60, 4.75],
+#     ["Nightside", 4.75, 4.90],
+# ]
+
+
+# ============================================================================
+# [fitting] - Fitting algorithm parameters
+# ============================================================================
+[fitting]
+# Minimization method: "powell", "leastsq", "nelder", etc.
+# "powell" is recommended for most cases
+method = "powell"
+
+# Number of random parameter space trials per model
+# Higher values = more thorough search but slower
+n_trials = 2000
+
+# Use random sampling for initial guess search (vs. grid search)
+# Random sampling is usually faster; set to false for systematic grid search
+use_random_sampling = true
+
+
+# ============================================================================
+# [output] - Output file options
+# ============================================================================
+[output]
+# Output directory for all generated files
+output_dir = "./output"
+
+# Save 9-panel grid plots (one per wavelength bin)?
+save_binned_plots = true
+
+# Save BIC summary table (CSV)?
+save_bic_table = true
+
+# Save BIC heatmap (wavelength vs. model)?
+# Only generated if multiple wavelength bins
+save_heatmap = true
+
+# Save standalone best-fit plot for each bin?
+save_best_fit_plot = true
+
+# Display plots in window?
+show_plots = true
+
+
+# ============================================================================
+# [styling] - Plot styling options
+# ============================================================================
+[styling]
+# Theme: "light" or "dark"
+theme = "light"
