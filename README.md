@@ -4,9 +4,9 @@ Multi-wavelength Fourier series fitting package for eclipse/transit time series 
 
 ## Features
 
-✨ **Modular Design**: Clean separation of data loading, fitting, plotting, and analysis orchestration
+**Modular Design**: Clean separation of data loading, fitting, plotting, and analysis orchestration
 
-📊 **8 Fourier Models**: Automatically fits all model combinations:
+**8 Fourier Models**: Automatically fits all model combinations:
 - Model A: 1st order (fixed period)
 - Model B: 1st order (free period)
 - Model C: 2nd order (fixed period)
@@ -16,18 +16,18 @@ Multi-wavelength Fourier series fitting package for eclipse/transit time series 
 - Model G: 3rd order (free period)
 - Model H: 3rd order (separate periods)
 
-🌈 **Flexible Wavelength Binning**:
+**Flexible Wavelength Binning**:
 - Broadband (single flux extraction)
 - N evenly-spaced wavelength bins
 - Custom wavelength regions
 
-📈 **Comprehensive Output**:
+**Comprehensive Output**:
 - 9-panel comparison plots (one per wavelength bin)
 - Standalone best-fit plots
 - BIC summary table (CSV)
 - BIC heatmap (wavelength vs. model)
 
-🎨 **Theme Support**: Light/dark mode plotting
+**Theme Support**: Light/dark mode plotting
 
 ## Quick Start
 
