@@ -215,33 +215,63 @@ dbl_pc_tso/
     └── heatmap.py          # BIC heatmap
 ```
 
-## Contributing
-
-Contributions welcome! Please ensure:
-- Code follows PEP 8 style guidelines
-- New modules include docstrings
-- Functions are type-hinted
-
-## License
-
-[Your License Here]
-
-## Authors
-
-Daphne Broski-Laing (daphne.broski.laing@virginia.edu)
-
-## Citation
-
-If you use this package in your research, please cite:
-
-```
-[Citation to be added]
-```
-
-## Support
-
-For issues, questions, or feature requests, please open a GitHub issue or contact the author.
+### List of Models
 
 ---
+
+## 1. First order Fourier series fit
+
+**A) Fixed period $P_{\text{roestel}}$**
+
+f(t) = a₀ + a₁ cos(2πt / P_roestel) + b₁ sin(2πt / P_roestel)
+
+**B) Fit for P as a free parameter**
+
+f(t) = a₀ + a₁ cos(2πt / P) + b₁ sin(2πt / P)
+
+---
+
+## 2. Second order Fourier series fit
+
+**C) Fixed period $P_{\text{roestel}}$**
+
+f(t) = a₀ + a₁ cos(2πt / P_roestel) + b₁ sin(2πt / P_roestel)
++ a₂ cos(4πt / P_roestel) + b₂ sin(4πt / P_roestel)
+
+**D) Fit for P as a free parameter**
+
+f(t) = a₀ + a₁ cos(2πt / P) + b₁ sin(2πt / P)
++ a₂ cos(4πt / P) + b₂ sin(4πt / P)
+
+**E) Fit for P₁ and P₂ separately as free parameters**
+
+f(t) = a₀ + a₁ cos(2πt / P₁) + b₁ sin(2πt / P₁)
++ a₂ cos(4πt / P₂) + b₂ sin(2πt / P₂)
+
+---
+
+## 3. Third order Fourier series fit  
+(skip n=3 due to symmetry of light curve)
+
+**F) Fixed period $P_{\text{roestel}}$**
+
+f(t) = a₀ + a₁ cos(2πt / P_roestel) + b₁ sin(2πt / P_roestel)
++ a₂ cos(4πt / P_roestel) + b₂ sin(4πt / P_roestel)
++ a₃ cos(8πt / P_roestel) + b₃ sin(8πt / P_roestel)
+
+**G) Fit for P as a free parameter**
+
+f(t) = a₀ + a₁ cos(2πt / P) + b₁ sin(2πt / P)
++ a₂ cos(4πt / P) + b₂ sin(4πt / P)
++ a₃ cos(8πt / P) + b₃ sin(8πt / P)
+
+**H) Fit for P₁, P₂, and P₃ separately as free parameters**
+
+f(t) = a₀ + a₁ cos(2πt / P₁) + b₁ sin(2πt / P₁)
++ a₂ cos(4πt / P₂) + b₂ sin(4πt / P₂)
++ a₃ cos(8πt / P₃) + b₃ sin(8πt / P₃)
+
+
+
 
 **Full Documentation**: See the [GitHub Wiki](../../wiki) for detailed guides, API reference, and troubleshooting.
