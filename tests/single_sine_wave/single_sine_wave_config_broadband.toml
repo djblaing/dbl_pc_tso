@@ -34,9 +34,10 @@ regions = [
 ]
 
 [fitting]
-method = "powell"
-n_trials = 1000
+method = "leastsq"
+n_trials = 500 # not used for differential evolution I think
 use_random_sampling = true
+use_differential_evolution = false # this doesn't work
 
 [output]
 output_dir = "./output_broadband"
