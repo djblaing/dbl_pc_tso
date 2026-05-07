@@ -15,7 +15,7 @@ object_name = "ZTFJ0038+2030"
 instrument = "PRISM"
 
 [observational_parameters]
-P_published = 1.1
+P_published = 1.05
 t0_published = "none"
 
 [wavelength_binning]
@@ -35,7 +35,7 @@ regions = [
 
 [fitting]
 method = "powell"
-n_trials = 100
+n_trials = 1000
 use_random_sampling = true
 
 [output]
