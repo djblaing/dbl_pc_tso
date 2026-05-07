@@ -1,0 +1,55 @@
+# macOS
+.DS_Store
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env/
+.venv/
+dzJWST/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Coverage / testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+
+# OS files
+Thumbs.db
+
+# Package-specific generated outputs
+results/
+outputs/
+figures/
+cache/
+
+# Large local datasets
+data/
+*.fits
+*.h5
+*.hdf5
+
+# Exceptions: keep example datasets tracked
+!examples/example_input.h5
