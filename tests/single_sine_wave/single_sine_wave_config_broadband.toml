@@ -1,0 +1,50 @@
+# Example: Multiple Wavelength Modes
+#
+# This configuration fits Fourier series models using multiple wavelength
+# extraction modes in a single run:
+# - Broadband (averaged flux)
+# - N evenly-spaced bins
+# - Custom regions (user-defined wavelength ranges)
+#
+# All bins from all modes are processed sequentially, with a unified CSV
+# summary and BIC heatmap showing all modes together.
+
+[data]
+input_path = "/Users/rqy2qb/Library/CloudStorage/OneDrive-Personal/Documents/Research/DBL_PC_TSO_package/tests/single_sine_wave/single_sine_wave_input.csv"
+object_name = "ZTFJ0038+2030"
+instrument = "PRISM"
+
+[observational_parameters]
+P_published = 1.1
+t0_published = "none"
+
+[wavelength_binning]
+# Use multiple modes by specifying an array
+mode = ["broadband"]
+n_bins = 2
+
+
+wave_min = 1.0
+wave_max = 5.0
+
+# Define custom regions when using "custom_regions" mode
+# Format: [["region_name", wave_min, wave_max], ...]
+regions = [
+    ["CO2_feature", 4.22, 4.27]
+]
+
+[fitting]
+method = "powell"
+n_trials = 100
+use_random_sampling = true
+
+[output]
+output_dir = "./output_broadband"
+save_binned_plots = true
+save_bic_table = true
+save_heatmap = true  # Creates 9-bin × 8-model heatmap
+save_best_fit_plot = true
+show_plots = false   # Non-blocking display
+
+[styling]
+theme = "light"

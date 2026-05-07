@@ -35,8 +35,8 @@ class Config:
         
         # Observational parameters
         obs_section = config_dict.get('observational_parameters', {})
-        self.P_published = obs_section.get('P_published', 0.4319208)  # in days
-        self.t0_published = obs_section.get('t0_published', 59045.485194)
+        self.P_published = self._parse_optional_float(obs_section.get('P_published', None))
+        self.t0_published = self._parse_optional_float(obs_section.get('t0_published', None))
         
         # Wavelength binning
         wave_section = config_dict.get('wavelength_binning', {})
@@ -71,6 +71,22 @@ class Config:
         # Styling
         style_section = config_dict.get('styling', {})
         self.theme = style_section.get('theme', 'light')
+
+    @staticmethod
+    def _parse_optional_float(value: Any) -> Optional[float]:
+        """Parse optional numeric config values, allowing string sentinels."""
+        if value is None:
+            return None
+
+        if isinstance(value, str):
+            lowered = value.strip().lower()
+            if lowered in {'none', 'null', ''}:
+                return None
+
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            raise ValueError(f"Expected float or None-like value, got: {value!r}")
     
     @property
     def binning_mode(self) -> str:

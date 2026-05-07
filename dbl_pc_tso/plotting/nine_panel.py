@@ -110,7 +110,7 @@ def plot_nine_panel(
                 # BIC chart
                 plot_bic_chart(ax_top, fit_results, theme)
             
-            elif label in fit_results and label in fit_models:
+            elif label in fit_results and label in fit_models and fit_results[label] is not None:
                 result = fit_results[label]
                 model_func = fit_models[label]
                 
@@ -129,6 +129,9 @@ def plot_nine_panel(
                     label, model_desc,
                     theme
                 )
+            elif label in fit_results and fit_results[label] is None:
+                # Fit failed for this model; keep panel and display a clear marker.
+                plot_failed_panel(ax_top, ax_bottom, label, theme)
             
             else:
                 # Empty panel
@@ -300,6 +303,20 @@ def plot_bic_chart(
         if label in fit_results and fit_results[label]:
             labels.append(label)
             bic_values.append(fit_results[label].bic)
+
+    if len(bic_values) == 0:
+        ax.text(
+            0.5, 0.5, 'No successful fits',
+            ha='center', va='center',
+            transform=ax.transAxes,
+            fontsize=12, color=theme.text_color, fontweight='bold'
+        )
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title('BIC for Each Model Fit', fontsize=13, color=theme.text_color, fontweight='bold')
+        for spine in ax.spines.values():
+            spine.set_color(theme.edge_color)
+        return
     
     x = np.arange(len(labels))
     bars = ax.bar(x, bic_values, color=theme.BD_COLOR, alpha=0.7, width=0.6,
@@ -343,3 +360,28 @@ def get_best_model(fit_results: Dict[str, MinimizerResult]) -> tuple:
             best_label = label
     
     return best_label, best_bic
+
+
+def plot_failed_panel(ax_fit, ax_res, model_label: str, theme: Theme):
+    """Render a panel placeholder when model fitting failed."""
+    ax_fit.text(
+        0.5, 0.5,
+        f"Model {model_label}\nfit failed",
+        transform=ax_fit.transAxes,
+        ha='center', va='center',
+        fontsize=11, color=theme.text_color,
+        bbox=dict(boxstyle='round,pad=0.4', facecolor=theme.panel_color,
+                  edgecolor=theme.edge_color, alpha=0.9)
+    )
+    ax_fit.set_xticks([])
+    ax_fit.set_yticks([])
+
+    ax_res.axhline(y=0, color='black', linestyle='--', linewidth=1)
+    ax_res.set_xticks([])
+    ax_res.set_yticks([])
+
+    for ax in [ax_fit, ax_res]:
+        ax.grid(color=theme.grid_color, linestyle='--', linewidth=0.5, alpha=0.2)
+        ax.tick_params(axis='both', labelsize=10, colors=theme.text_color)
+        for spine in ax.spines.values():
+            spine.set_color(theme.edge_color)

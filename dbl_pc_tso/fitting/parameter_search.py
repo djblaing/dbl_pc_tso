@@ -7,7 +7,7 @@ that minimize BIC.
 
 import numpy as np
 import lmfit
-from typing import Any, Tuple, Callable
+from typing import Any, Tuple, Callable, Optional
 
 MinimizerResult = Any
 
@@ -42,8 +42,8 @@ def random_parameter_search(
     flux: np.ndarray,
     flux_err: np.ndarray,
     create_params_func: Callable,
-    P_published: float,
-    t0_epoch: float,
+    P_published: Optional[float],
+    t0_epoch: Optional[float],
     n_trials: int = 2000,
     method: str = 'powell',
     verbose: bool = True
@@ -79,15 +79,15 @@ def random_parameter_search(
     for trial in range(n_trials):
         try:
             # Create initial parameters with some randomization
-            params = create_params_func(flux, P_published, t0_epoch)
-            
+            params = create_params_func(time, flux, P_published, t0_epoch)
+
             # Add small random perturbations to initial values
             for param_name in params:
                 if params[param_name].vary:
                     center = params[param_name].value
                     param_range = params[param_name].max - params[param_name].min
-                    # Random perturbation within ±10% of parameter range
-                    perturbation = (np.random.uniform(-0.1, 0.1) * param_range)
+                    # Random perturbation within ±25% of parameter range for better exploration
+                    perturbation = (np.random.uniform(-0.25, 0.25) * param_range)
                     params[param_name].value = center + perturbation
             
             # Perform fit
@@ -124,8 +124,8 @@ def grid_parameter_search(
     flux: np.ndarray,
     flux_err: np.ndarray,
     create_params_func: Callable,
-    P_published: float,
-    t0_epoch: float,
+    P_published: Optional[float],
+    t0_epoch: Optional[float],
     method: str = 'powell',
     verbose: bool = True
 ) -> Tuple[lmfit.Parameters, MinimizerResult, float]:
@@ -162,7 +162,17 @@ def grid_parameter_search(
     # Coarse grids for efficiency
     a0_values = np.linspace(flux_mean - flux_range/2, flux_mean + flux_range/2, 3)
     ampl_values = np.linspace(-0.1*flux_range, 0.1*flux_range, 3)
-    P_values = [0.95*P_published, P_published, 1.05*P_published]
+    if P_published is None:
+        if len(time) > 1:
+            span = float(np.nanmax(time) - np.nanmin(time))
+            dt = float(np.nanmedian(np.diff(time)))
+            p_min = max(0.5 * dt, 0.01)
+            p_max = max(2.0 * span, p_min * 2.0)
+            P_values = np.linspace(p_min, p_max, 3).tolist()
+        else:
+            P_values = [0.5, 1.0, 2.0]
+    else:
+        P_values = [0.95*P_published, P_published, 1.05*P_published]
     
     total_combinations = (len(a0_values) * len(ampl_values)**2 * len(P_values))
     
@@ -178,7 +188,7 @@ def grid_parameter_search(
                     combination_count += 1
                     
                     try:
-                        params = create_params_func(flux, P, t0_epoch)
+                        params = create_params_func(time, flux, P, t0_epoch)
                         params['a0'].value = a0
                         if 'a1' in params:
                             params['a1'].value = a1

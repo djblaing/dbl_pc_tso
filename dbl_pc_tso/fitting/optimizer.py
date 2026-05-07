@@ -88,8 +88,8 @@ class ModelFitter:
         t0_epoch = self.config.t0_published  # Could propagate if needed
         
         # Create initial parameter creator function
-        def create_params(fluxes, P, t0):
-            params = create_initial_params(label, fluxes, P, t0)
+        def create_params(time_arr, fluxes, P, t0):
+            params = create_initial_params(label, fluxes, P, t0, time=time_arr)
             return params
         
         # Parameter space search for initial guesses

@@ -234,6 +234,7 @@ class Analysis:
         df = generate_bic_summary_table(
             binned_results,
             bin_wavelength_ranges,
+            published_period=self.config.P_published,
             output_path=str(output_path)
         )
         

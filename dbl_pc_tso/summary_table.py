@@ -16,6 +16,7 @@ MinimizerResult = Any
 def generate_bic_summary_table(
     binned_results: Dict[str, Dict[str, MinimizerResult]],
     bin_wavelength_ranges: Dict[str, Tuple[float, float]],
+    published_period: Optional[float] = None,
     output_path: Optional[str] = None
 ) -> pd.DataFrame:
     """
@@ -24,6 +25,7 @@ def generate_bic_summary_table(
     Args:
         binned_results: Dict mapping bin_label -> Dict[model_label -> result]
         bin_wavelength_ranges: Dict mapping bin_label -> (wave_min, wave_max)
+        published_period: Published period used for fixed-period models (optional)
         output_path: Path to save CSV (optional)
         
     Returns:
@@ -75,6 +77,10 @@ def generate_bic_summary_table(
                 best_model = model
         
         row['Best_Model'] = best_model if best_model else "N/A"
+
+        # Best-model Fourier parameters
+        best_result = bin_results.get(best_model) if best_model else None
+        row.update(_extract_best_model_parameters(best_result, best_model, published_period))
         
         data.append(row)
     
@@ -85,6 +91,11 @@ def generate_bic_summary_table(
     cols = ['Bin', 'Wavelength_Range']
     cols.extend([f'BIC_{label}' for label in model_labels])
     cols.append('Best_Model')
+    cols.extend([
+        'Best_a0', 'Best_a1', 'Best_b1', 'Best_a2', 'Best_b2', 'Best_a4', 'Best_b4',
+        'Best_Period', 'Best_P1', 'Best_P2', 'Best_P4',
+        'Best_Amp1', 'Best_Amp2', 'Best_Amp4'
+    ])
     
     # Keep only columns that exist
     cols = [c for c in cols if c in df.columns]
@@ -124,6 +135,72 @@ def print_bic_summary(df: pd.DataFrame):
     
     print(display_df.to_string(index=False))
     print("="*100)
+
+
+def _extract_best_model_parameters(
+    best_result: Optional[MinimizerResult],
+    best_model_label: Optional[str],
+    published_period: Optional[float]
+) -> Dict[str, float]:
+    """Extract Fourier coefficients/periods for the best model in a bin."""
+    out = {
+        'Best_a0': np.nan,
+        'Best_a1': np.nan,
+        'Best_b1': np.nan,
+        'Best_a2': np.nan,
+        'Best_b2': np.nan,
+        'Best_a4': np.nan,
+        'Best_b4': np.nan,
+        'Best_Period': np.nan,
+        'Best_P1': np.nan,
+        'Best_P2': np.nan,
+        'Best_P4': np.nan,
+        'Best_Amp1': np.nan,
+        'Best_Amp2': np.nan,
+        'Best_Amp4': np.nan,
+    }
+
+    if best_result is None or not hasattr(best_result, 'params'):
+        return out
+
+    params = best_result.params
+
+    def _param_value(name: str) -> float:
+        if name in params:
+            return float(params[name].value)
+        return np.nan
+
+    out['Best_a0'] = _param_value('a0')
+    out['Best_a1'] = _param_value('a1')
+    out['Best_b1'] = _param_value('b1')
+    out['Best_a2'] = _param_value('a2')
+    out['Best_b2'] = _param_value('b2')
+    out['Best_a4'] = _param_value('a4')
+    out['Best_b4'] = _param_value('b4')
+
+    out['Best_Period'] = _param_value('period')
+    out['Best_P1'] = _param_value('P1')
+    out['Best_P2'] = _param_value('P2')
+    out['Best_P4'] = _param_value('P4')
+
+    # For fixed-period models, period is not stored in fit params.
+    if np.isnan(out['Best_Period']) and best_model_label in {'A', 'C', 'F'} and published_period is not None:
+        out['Best_Period'] = float(published_period)
+
+    # Harmonic amplitudes from cosine/sine coefficients.
+    if np.isfinite(out['Best_a1']) and np.isfinite(out['Best_b1']):
+        out['Best_Amp1'] = float(np.hypot(out['Best_a1'], out['Best_b1']))
+    if np.isfinite(out['Best_a2']) and np.isfinite(out['Best_b2']):
+        out['Best_Amp2'] = float(np.hypot(out['Best_a2'], out['Best_b2']))
+    if np.isfinite(out['Best_a4']) and np.isfinite(out['Best_b4']):
+        out['Best_Amp4'] = float(np.hypot(out['Best_a4'], out['Best_b4']))
+
+    # Keep CSV readable/consistent with BIC precision.
+    for k, v in out.items():
+        if np.isfinite(v):
+            out[k] = round(v, 4)
+
+    return out
 
 
 def get_bic_statistics(df: pd.DataFrame) -> Dict:

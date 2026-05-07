@@ -74,6 +74,39 @@ def plot_bic_heatmap(
     fig, ax = plt.subplots(figsize=(12, len(bin_labels_sorted) * 0.6 + 2),
                            facecolor=theme.background_color)
     ax.set_facecolor(theme.background_color)
+
+    if not np.isfinite(bic_matrix).any():
+        ax.text(
+            0.5, 0.5,
+            'No successful fits to display',
+            ha='center', va='center',
+            transform=ax.transAxes,
+            fontsize=13, color=theme.text_color, fontweight='bold'
+        )
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title('BIC Heatmap', fontsize=16, color=theme.text_color, fontweight='bold', pad=15)
+
+        for spine in ax.spines.values():
+            spine.set_color(theme.edge_color)
+            spine.set_linewidth(1.5)
+
+        plt.tight_layout()
+
+        if save_path:
+            save_path = Path(save_path)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(save_path, dpi=300, facecolor=theme.figure_color)
+            print(f"Saved heatmap to {save_path}")
+
+        if show:
+            # Non-blocking show prevents CLI runs from hanging waiting on GUI close.
+            plt.show(block=False)
+            plt.pause(0.001)
+
+        # Always close after save/show to free resources in batch runs.
+        plt.close(fig)
+        return fig
     
     # Create heatmap
     im = ax.imshow(bic_matrix, cmap='RdYlGn_r', aspect='auto', alpha=0.8)
@@ -107,7 +140,9 @@ def plot_bic_heatmap(
         for j in range(len(model_labels)):
             if not np.isnan(bic_matrix[i, j]):
                 bic_val = bic_matrix[i, j]
-                text_color = 'white' if bic_val < np.nanpercentile(bic_matrix, 50) else 'black'
+                valid_vals = bic_matrix[np.isfinite(bic_matrix)]
+                threshold = np.percentile(valid_vals, 50) if valid_vals.size else bic_val
+                text_color = 'white' if bic_val < threshold else 'black'
                 
                 # Text
                 ax.text(j, i, f'{bic_val:.0f}',
