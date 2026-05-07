@@ -1,10 +1,9 @@
 # DBL PC TSO Package
 
-Multi-wavelength Fourier series fitting package for eclipse/transit time series analysis. Fits 8 different Fourier models (varying from 1st to 3rd order, with fixed/free/separate periods) to spectroscopic light curves and provides comprehensive visualization and statistical comparison.
+
+This package is designed to analyze phase curve observations. Currently, it finds the best-fitting phase curve models designed to detect the rotational modulation of tidally locked atmospheres with strong day-night temperature gradients. 
 
 ## Features
-
-**Modular Design**: Clean separation of data loading, fitting, plotting, and analysis orchestration
 
 **8 Fourier Models**: Automatically fits all model combinations:
 - Model A: 1st order (fixed period)
