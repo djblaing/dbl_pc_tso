@@ -7,12 +7,14 @@ Generates CSV tables summarizing BIC values across wavelength bins and models.
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 import lmfit
+
+MinimizerResult = Any
 
 
 def generate_bic_summary_table(
-    binned_results: Dict[str, Dict[str, lmfit.result.MinimizerResult]],
+    binned_results: Dict[str, Dict[str, MinimizerResult]],
     bin_wavelength_ranges: Dict[str, Tuple[float, float]],
     output_path: Optional[str] = None
 ) -> pd.DataFrame:
@@ -57,8 +59,9 @@ def generate_bic_summary_table(
         bic_values = {}
         for model_label in model_labels:
             if model_label in bin_results and bin_results[model_label]:
-                bic_values[model_label] = bin_results[model_label].bic
-                row[f'BIC_{model_label}'] = bin_results[model_label].bic
+                bic_value = bin_results[model_label].bic
+                bic_values[model_label] = bic_value
+                row[f'BIC_{model_label}'] = round(bic_value, 4)
             else:
                 bic_values[model_label] = np.nan
                 row[f'BIC_{model_label}'] = np.nan

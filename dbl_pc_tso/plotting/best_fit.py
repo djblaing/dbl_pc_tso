@@ -7,16 +7,18 @@ Creates a clean, large single plot for the best-fit model.
 import numpy as np
 import matplotlib.pyplot as plt
 import lmfit
-from typing import Optional
+from typing import Any, Optional
 from pathlib import Path
 from .styling import Theme
+
+MinimizerResult = Any
 
 
 def plot_best_fit_standalone(
     time: np.ndarray,
     flux: np.ndarray,
     flux_err: np.ndarray,
-    best_result: lmfit.result.MinimizerResult,
+    best_result: MinimizerResult,
     best_model_name: str,
     best_label: str,
     model_func: callable,
@@ -31,7 +33,7 @@ def plot_best_fit_standalone(
         time: Time array
         flux: Flux array
         flux_err: Flux error array
-        best_result: Best lmfit result
+        best_result: Best fit result
         best_model_name: Name of best model (e.g., "Second Order (Free P)")
         best_label: Label (A-H)
         model_func: Model function
@@ -133,6 +135,11 @@ def plot_best_fit_standalone(
         print(f"Saved best-fit plot to {save_path}")
     
     if show:
-        plt.show()
+        # Non-blocking show prevents CLI runs from hanging waiting on GUI close.
+        plt.show(block=False)
+        plt.pause(0.001)
+    
+    # Always close after save/show to free resources in batch runs.
+    plt.close(fig)
     
     return fig

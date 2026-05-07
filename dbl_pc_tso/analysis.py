@@ -6,9 +6,12 @@ Coordinates data loading, fitting, and output generation.
 
 from pathlib import Path
 from collections import OrderedDict as OD
+import re
 import numpy as np
 import lmfit
-from typing import Dict, Tuple, Optional
+from typing import Any, Dict, Tuple, Optional
+
+MinimizerResult = Any
 
 from .config import Config, load_config
 from .data_loader import DataLoader
@@ -23,6 +26,15 @@ from .summary_table import generate_bic_summary_table, print_bic_summary
 
 class Analysis:
     """Main analysis orchestrator."""
+
+    @staticmethod
+    def _format_progress_bar(done: int, total: int, width: int = 24) -> str:
+        """Render a compact terminal progress bar."""
+        if total <= 0:
+            return "[" + ("-" * width) + "]"
+        filled = int(round(width * done / total))
+        filled = max(0, min(width, filled))
+        return "[" + ("#" * filled) + ("-" * (width - filled)) + "]"
     
     def __init__(self, config_path: str):
         """
@@ -33,10 +45,38 @@ class Analysis:
         """
         self.config = load_config(config_path)
         self.theme = setup_theme(self.config.theme)
-        self.output_dir = Path(self.config.output_dir)
+        self.output_dir = (
+            Path(self.config.output_dir)
+            / self._sanitize_filename_token(self.config.object_name)
+            / self._sanitize_filename_token(self.config.instrument)
+        )
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
         print(f"Output directory: {self.output_dir}")
+
+    def _sanitize_filename_token(self, value: str) -> str:
+        """Convert a string into a filesystem-friendly token."""
+        token = str(value).strip().replace('µ', 'u')
+        token = re.sub(r'[^A-Za-z0-9._-]+', '_', token)
+        return token.strip('_')
+
+    def _bin_label_for_filename(self, bin_label: str, bin_wavelength_ranges: Dict[str, Tuple[float, float]]) -> str:
+        """Create an intuitive, filesystem-safe bin label for output files."""
+        if bin_label.lower() == 'broadband':
+            return 'broadband'
+
+        if bin_label in bin_wavelength_ranges:
+            wmin, wmax = bin_wavelength_ranges[bin_label]
+            return f"{wmin:.2f}-{wmax:.2f}um"
+
+        return self._sanitize_filename_token(bin_label).lower()
+
+    def _output_stem(self, bin_label: str, bin_wavelength_ranges: Dict[str, Tuple[float, float]]) -> str:
+        """Return the common output filename stem: obj_inst_bin."""
+        obj_token = self._sanitize_filename_token(self.config.object_name)
+        inst_token = self._sanitize_filename_token(self.config.instrument)
+        bin_token = self._bin_label_for_filename(bin_label, bin_wavelength_ranges)
+        return f"{obj_token}_{inst_token}_{bin_token}"
     
     def run(self):
         """Run complete analysis."""
@@ -70,11 +110,15 @@ class Analysis:
         self,
         time: np.ndarray,
         binned_flux_dict: Dict[str, Tuple[np.ndarray, np.ndarray]]
-    ) -> Dict[str, Dict[str, lmfit.result.MinimizerResult]]:
+    ) -> Dict[str, Dict[str, MinimizerResult]]:
         """Fit all bins."""
         results = OD()
+
+        bin_labels = list(binned_flux_dict.keys())
+        total_bins = len(bin_labels)
+        print(f"Bin progress {self._format_progress_bar(0, total_bins)} 0/{total_bins}")
         
-        for bin_label, (flux, flux_err) in binned_flux_dict.items():
+        for bin_index, (bin_label, (flux, flux_err)) in enumerate(binned_flux_dict.items(), start=1):
             print(f"\n  Fitting bin: {bin_label}")
             
             fitter = ModelFitter(self.config)
@@ -83,6 +127,7 @@ class Analysis:
             
             # Print summary for this bin
             fitter.print_summary()
+            print(f"Bin progress {self._format_progress_bar(bin_index, total_bins)} {bin_index}/{total_bins}")
         
         return results
     
@@ -97,7 +142,7 @@ class Analysis:
         self,
         time: np.ndarray,
         binned_flux_dict: Dict[str, Tuple[np.ndarray, np.ndarray]],
-        binned_results: Dict[str, Dict[str, lmfit.result.MinimizerResult]],
+        binned_results: Dict[str, Dict[str, MinimizerResult]],
         binned_models: Dict[str, callable]
     ):
         """Generate all output plots."""
@@ -117,7 +162,8 @@ class Analysis:
                     title_suffix = ""
                 
                 # Create 9-panel plot
-                output_path = self.output_dir / f"{bin_label}_nine_panel.png"
+                output_stem = self._output_stem(bin_label, bin_wavelength_ranges)
+                output_path = self.output_dir / f"{output_stem}_9panel.png"
                 
                 fig = plot_nine_panel(
                     time, flux, flux_err,
@@ -145,7 +191,8 @@ class Analysis:
                     model_name, _, _ = MODELS[best_label]
                     model_func = binned_models[best_label]
                     
-                    output_path = self.output_dir / f"{bin_label}_best_fit.png"
+                    output_stem = self._output_stem(bin_label, bin_wavelength_ranges)
+                    output_path = self.output_dir / f"{output_stem}_best_fit.png"
                     
                     fig = plot_best_fit_standalone(
                         time, flux, flux_err,
@@ -157,7 +204,9 @@ class Analysis:
         
         # BIC heatmap (only if multiple bins)
         if self.config.save_heatmap and len(binned_flux_dict) > 1:
-            output_path = self.output_dir / "bic_heatmap.png"
+            obj_token = self._sanitize_filename_token(self.config.object_name)
+            inst_token = self._sanitize_filename_token(self.config.instrument)
+            output_path = self.output_dir / f"{obj_token}_{inst_token}_bic_heatmap.png"
             
             fig = plot_bic_heatmap(
                 binned_results,
@@ -169,7 +218,7 @@ class Analysis:
     
     def _generate_summary(
         self,
-        binned_results: Dict[str, Dict[str, lmfit.result.MinimizerResult]]
+        binned_results: Dict[str, Dict[str, MinimizerResult]]
     ):
         """Generate summary table."""
         
@@ -178,7 +227,9 @@ class Analysis:
         bin_wavelength_ranges = {label: (wmin, wmax) for label, wmin, wmax in bins}
         
         # Create summary table
-        output_path = self.output_dir / "bic_summary.csv"
+        obj_token = self._sanitize_filename_token(self.config.object_name)
+        inst_token = self._sanitize_filename_token(self.config.instrument)
+        output_path = self.output_dir / f"{obj_token}_{inst_token}_bic_summary.csv"
         
         df = generate_bic_summary_table(
             binned_results,

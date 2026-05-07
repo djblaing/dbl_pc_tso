@@ -8,17 +8,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import lmfit
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 from pathlib import Path
 from .styling import Theme
 from ..fitting.models import MODELS
+
+MinimizerResult = Any
 
 
 def plot_nine_panel(
     time: np.ndarray,
     flux: np.ndarray,
     flux_err: np.ndarray,
-    fit_results: Dict[str, lmfit.result.MinimizerResult],
+    fit_results: Dict[str, MinimizerResult],
     fit_models: Dict[str, callable],
     theme: Theme,
     title_suffix: str = "",
@@ -41,7 +43,7 @@ def plot_nine_panel(
         time: Time array
         flux: Flux array
         flux_err: Flux error array
-        fit_results: Dict mapping model label (A-H) to lmfit results
+        fit_results: Dict mapping model label (A-H) to fit results
         fit_models: Dict mapping model label to model function
         theme: Theme object for colors/styling
         title_suffix: Optional suffix for plot title (e.g., wavelength info)
@@ -82,13 +84,9 @@ def plot_nine_panel(
             label = model_layout[row][col]
             
             if label is None:
-                # BIC chart location (top-right)
-                gs_sub = gridspec.GridSpecFromSubplotSpec(
-                    2, 1, subplot_spec=outer_gs[row, col],
-                    height_ratios=[2, 1], hspace=0.0
-                )
-                ax_top = fig.add_subplot(gs_sub[0])
-                ax_bottom = fig.add_subplot(gs_sub[1], sharex=ax_top)
+                # BIC chart occupies the entire top-right panel
+                ax_top = fig.add_subplot(outer_gs[row, col])
+                ax_bottom = None
             else:
                 # Regular fit panel (2 subplots: fit + residuals)
                 gs_sub = gridspec.GridSpecFromSubplotSpec(
@@ -100,7 +98,8 @@ def plot_nine_panel(
             
             axes_dict[(row, col)] = (ax_top, ax_bottom, label)
             ax_top.set_facecolor(theme.background_color)
-            ax_bottom.set_facecolor(theme.background_color)
+            if ax_bottom is not None:
+                ax_bottom.set_facecolor(theme.background_color)
     
     # Second pass: Plot fits and residuals
     for row in range(n_rows):
@@ -110,7 +109,6 @@ def plot_nine_panel(
             if label is None:
                 # BIC chart
                 plot_bic_chart(ax_top, fit_results, theme)
-                ax_bottom.axis('off')
             
             elif label in fit_results and label in fit_models:
                 result = fit_results[label]
@@ -140,10 +138,12 @@ def plot_nine_panel(
             # Hide tick labels except on edges
             if col != 0:
                 ax_top.tick_params(axis='y', labelleft=False)
-                ax_bottom.tick_params(axis='y', labelleft=False)
+                if ax_bottom is not None:
+                    ax_bottom.tick_params(axis='y', labelleft=False)
             if row != n_rows - 1:
                 ax_top.tick_params(axis='x', labelbottom=False)
-                ax_bottom.tick_params(axis='x', labelbottom=False)
+                if ax_bottom is not None:
+                    ax_bottom.tick_params(axis='x', labelbottom=False)
     
     # Highlight best BIC with thick frame
     best_label, best_bic = get_best_model(fit_results)
@@ -185,7 +185,12 @@ def plot_nine_panel(
         print(f"Saved plot to {save_path}")
     
     if show:
-        plt.show()
+        # Non-blocking show prevents CLI runs from hanging waiting on GUI close.
+        plt.show(block=False)
+        plt.pause(0.001)
+    
+    # Always close after save/show to free resources in batch runs.
+    plt.close(fig)
     
     return fig
 
@@ -197,7 +202,7 @@ def plot_fit_panel(
     time_full: np.ndarray,
     flux: np.ndarray,
     flux_err: np.ndarray,
-    result: lmfit.result.MinimizerResult,
+    result: MinimizerResult,
     model_func: callable,
     model_label: str,
     model_desc: str,
@@ -213,7 +218,7 @@ def plot_fit_panel(
         time_full: Full time array
         flux: Flux array
         flux_err: Flux error array
-        result: lmfit result
+        result: fit result
         model_func: Model function
         model_label: Single letter (A-H)
         model_desc: Description of model
@@ -277,7 +282,7 @@ def plot_fit_panel(
 
 def plot_bic_chart(
     ax,
-    fit_results: Dict[str, lmfit.result.MinimizerResult],
+    fit_results: Dict[str, MinimizerResult],
     theme: Theme
 ):
     """
@@ -311,17 +316,18 @@ def plot_bic_chart(
     # Styling
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontsize=11, color=theme.text_color)
-    ax.set_ylabel('BIC', fontsize=12, color=theme.text_color, fontweight='bold')
-    ax.set_title('BIC Comparison', fontsize=13, color=theme.text_color, fontweight='bold')
+    ax.set_ylabel('')
+    ax.set_title('BIC for Each Model Fit', fontsize=13, color=theme.text_color, fontweight='bold')
     ax.set_ylim(0, max_bic * 1.15)
-    ax.tick_params(axis='y', colors=theme.text_color)
+    ax.set_yticks([])
+    ax.tick_params(axis='y', left=False, labelleft=False)
     ax.grid(True, axis='y', linestyle='--', alpha=0.4, color=theme.grid_color)
     
     for spine in ax.spines.values():
         spine.set_color(theme.edge_color)
 
 
-def get_best_model(fit_results: Dict[str, lmfit.result.MinimizerResult]) -> tuple:
+def get_best_model(fit_results: Dict[str, MinimizerResult]) -> tuple:
     """
     Find model with lowest BIC.
     

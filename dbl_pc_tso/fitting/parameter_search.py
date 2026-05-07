@@ -7,7 +7,9 @@ that minimize BIC.
 
 import numpy as np
 import lmfit
-from typing import Tuple, Callable, Optional
+from typing import Any, Tuple, Callable
+
+MinimizerResult = Any
 
 
 def residual_wrapper(
@@ -45,7 +47,7 @@ def random_parameter_search(
     n_trials: int = 2000,
     method: str = 'powell',
     verbose: bool = True
-) -> Tuple[lmfit.Parameters, lmfit.result.MinimizerResult, float]:
+) -> Tuple[lmfit.Parameters, MinimizerResult, float]:
     """
     Random parameter space search to find optimal initial guesses.
     
@@ -126,7 +128,7 @@ def grid_parameter_search(
     t0_epoch: float,
     method: str = 'powell',
     verbose: bool = True
-) -> Tuple[lmfit.Parameters, lmfit.result.MinimizerResult, float]:
+) -> Tuple[lmfit.Parameters, MinimizerResult, float]:
     """
     Systematic grid search over parameter space.
     

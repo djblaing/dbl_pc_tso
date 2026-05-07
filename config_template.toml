@@ -7,9 +7,9 @@
 # [data] - Data files and object information
 # ============================================================================
 [data]
-# Path to the time_series_spectra H5 file (REQUIRED)
-# This file should contain: time, eureka_wave_1d, and flux arrays
-h5_path = "/path/to/ZTFJ0038+2030_PRISM_time_series_spectra.h5"
+# Path to the input data file (REQUIRED)
+# Supported formats: H5, CSV, TXT, TSV, DAT
+input_path = "/path/to/ZTFJ0038+2030_PRISM_input.csv"
 
 # Object name (for file naming and logging)
 object_name = "ZTFJ0038+2030"
@@ -58,9 +58,9 @@ wave_max = 5.0
 # Format: [["Region Name", wave_min, wave_max], ...]
 # Uncomment to use, or leave commented if using broadband/n_bins mode
 # regions = [
-#     ["Dayside", 4.50, 4.60],
-#     ["Terminator", 4.60, 4.75],
-#     ["Nightside", 4.75, 4.90],
+#     ["region_1", 4.50, 4.60],
+#     ["region_2", 4.60, 4.75],
+#     ["region_3", 4.75, 4.90],
 # ]
 
 
@@ -74,7 +74,7 @@ method = "powell"
 
 # Number of random parameter space trials per model
 # Higher values = more thorough search but slower
-n_trials = 2000
+n_trials = 20
 
 # Use random sampling for initial guess search (vs. grid search)
 # Random sampling is usually faster; set to false for systematic grid search
@@ -102,7 +102,7 @@ save_heatmap = true
 save_best_fit_plot = true
 
 # Display plots in window?
-show_plots = true
+show_plots = false
 
 
 # ============================================================================

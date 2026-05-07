@@ -6,11 +6,14 @@ Coordinates parameter search, model fitting, and BIC calculation.
 
 import numpy as np
 import lmfit
-from typing import Dict, Tuple, Callable, OrderedDict
+import time as pytime
+from typing import Any, Dict, Tuple, Callable, OrderedDict
 from collections import OrderedDict as OD
 from .models import MODELS, get_model_function, create_initial_params
 from .parameter_search import random_parameter_search, grid_parameter_search
 from ..config import Config
+
+MinimizerResult = Any
 
 
 def residual_wrapper(
@@ -27,6 +30,15 @@ def residual_wrapper(
 
 class ModelFitter:
     """Fits all 8 models to time series data."""
+
+    @staticmethod
+    def _format_progress_bar(done: int, total: int, width: int = 24) -> str:
+        """Render a compact terminal progress bar."""
+        if total <= 0:
+            return "[" + ("-" * width) + "]"
+        filled = int(round(width * done / total))
+        filled = max(0, min(width, filled))
+        return "[" + ("#" * filled) + ("-" * (width - filled)) + "]"
     
     def __init__(self, config: Config):
         """
@@ -45,7 +57,7 @@ class ModelFitter:
         flux: np.ndarray,
         flux_err: np.ndarray,
         verbose: bool = True
-    ) -> lmfit.result.MinimizerResult:
+    ) -> MinimizerResult:
         """
         Fit a single model.
         
@@ -119,7 +131,7 @@ class ModelFitter:
         flux: np.ndarray,
         flux_err: np.ndarray,
         verbose: bool = True
-    ) -> Dict[str, lmfit.result.MinimizerResult]:
+    ) -> Dict[str, MinimizerResult]:
         """
         Fit all 8 models.
         
@@ -136,8 +148,24 @@ class ModelFitter:
         print("FITTING ALL MODELS")
         print("="*60)
         
-        for label in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
+        model_sequence = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
+        total_models = len(model_sequence)
+        print(f"Model progress {self._format_progress_bar(0, total_models)} 0/{total_models}")
+
+        for index, label in enumerate(model_sequence, start=1):
+            model_name, _, _ = MODELS[label]
+            print(f"  [{index}/{len(model_sequence)}] Model {label}: {model_name} ...", end="", flush=True)
+            start = pytime.perf_counter()
             self.fit_single_model(label, time, flux, flux_err, verbose=verbose)
+            elapsed = pytime.perf_counter() - start
+            result = self.results.get(label)
+            if result is not None:
+                print(f" done ({elapsed:.1f}s, BIC={result.bic:.1f})")
+            else:
+                print(f" failed ({elapsed:.1f}s)")
+
+            bar = self._format_progress_bar(index, total_models)
+            print(f"Model progress {bar} {index}/{total_models}")
         
         return self.results
     
@@ -154,7 +182,7 @@ class ModelFitter:
                 bic_summary[label] = result.bic
         return bic_summary
     
-    def get_best_model(self) -> Tuple[str, lmfit.result.MinimizerResult]:
+    def get_best_model(self) -> Tuple[str, MinimizerResult]:
         """
         Get the model with lowest BIC.
         

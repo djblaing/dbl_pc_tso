@@ -68,6 +68,8 @@ run_analysis('my_config.toml')
 
 All settings are controlled via TOML configuration files. See `config_template.toml` for detailed documentation.
 
+Additional short-form documentation lives in `docs/wiki/`.
+
 ### Example Configurations
 
 **Broadband fitting** (single wavelength):
@@ -90,9 +92,9 @@ wave_max = 5.0
 [wavelength_binning]
 mode = "custom_regions"
 regions = [
-    ["Dayside", 4.50, 4.60],
-    ["Terminator", 4.60, 4.75],
-    ["Nightside", 4.75, 4.90],
+    ["CO2_feature", 4.50, 4.60],
+    ["CO2_shoulder", 4.60, 4.75],
+    ["continuum_ref", 4.75, 4.90],
 ]
 ```
 

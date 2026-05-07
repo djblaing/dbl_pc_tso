@@ -1,10 +1,10 @@
 # Example: Custom Wavelength Regions
 #
 # This configuration uses hand-defined wavelength regions based on
-# physical interpretations (e.g., dayside, terminator, nightside).
+# molecular feature windows (e.g., CO2-related bands).
 
 [data]
-h5_path = "/path/to/ZTFJ0038+2030_PRISM_time_series_spectra.h5"
+input_path = "./examples/example_input.csv"
 object_name = "ZTFJ0038+2030"
 instrument = "PRISM"
 
@@ -17,9 +17,9 @@ mode = "custom_regions"
 
 # Define custom wavelength regions
 regions = [
-    ["Dayside", 4.50, 4.60],
-    ["Terminator", 4.60, 4.75],
-    ["Nightside", 4.75, 4.90],
+    ["CO2_feature", 4.50, 4.60],
+    ["CO2_shoulder", 4.60, 4.75],
+    ["continuum_ref", 4.75, 4.90],
 ]
 
 [fitting]

@@ -4,7 +4,7 @@
 # (averaged across entire wavelength range).
 
 [data]
-h5_path = "/path/to/ZTFJ0038+2030_PRISM_time_series_spectra.h5"
+input_path = "./examples/example_input.csv"
 object_name = "ZTFJ0038+2030"
 instrument = "PRISM"
 

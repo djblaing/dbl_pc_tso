@@ -8,13 +8,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 import lmfit
 from .styling import Theme
 
+MinimizerResult = Any
+
 
 def plot_bic_heatmap(
-    binned_results: Dict[str, Dict[str, lmfit.result.MinimizerResult]],
+    binned_results: Dict[str, Dict[str, MinimizerResult]],
     bin_wavelength_ranges: Dict[str, Tuple[float, float]],
     theme: Theme,
     save_path: Optional[str] = None,
@@ -137,6 +139,11 @@ def plot_bic_heatmap(
         print(f"Saved heatmap to {save_path}")
     
     if show:
-        plt.show()
+        # Non-blocking show prevents CLI runs from hanging waiting on GUI close.
+        plt.show(block=False)
+        plt.pause(0.001)
+    
+    # Always close after save/show to free resources in batch runs.
+    plt.close(fig)
     
     return fig
