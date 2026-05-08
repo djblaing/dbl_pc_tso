@@ -37,6 +37,6 @@ from dbl_pc_tso.analysis import run_analysis
 run_analysis('my_config.toml')
 ```
 
-
+Note: Copilot was used to help modularize the code and structure the documentation
 
 **Full Documentation**: See the [GitHub Wiki](../../wiki) for detailed guides, API reference, and troubleshooting.
