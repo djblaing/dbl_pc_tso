@@ -10,7 +10,7 @@
 # summary and BIC heatmap showing all modes together.
 
 [data]
-input_path = "/Users/rqy2qb/DataAnalysis/JWST/ZTFJ0038+2030/ZTFJ0038+2030_Eureka/PRISM/Stage3/S3_2026-01-16_ZTFJ0038+2030_PRISM_run1/ap3_bg4/ZTFJ0038+2030_PRISM_WD_and_BD_phase_spectra.h5"
+input_path = "/Users/rqy2qb/Library/CloudStorage/OneDrive-Personal/Documents/Research/DBL_PC_TSO_package/tests/ZTF0038/ZTF0038_config_multi_modes.toml"
 object_name = "ZTFJ0038+2030"
 instrument = "PRISM"
 
