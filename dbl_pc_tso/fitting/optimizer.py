@@ -11,7 +11,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Any, Dict, Tuple, Callable, OrderedDict
 from collections import OrderedDict as OD
 from .models import MODELS, get_model_function, create_initial_params
-from .parameter_search import random_parameter_search, grid_parameter_search
+from .parameter_search import random_parameter_search, grid_parameter_search, differential_evolution_search
 from ..config import Config
 
 MinimizerResult = Any
@@ -54,7 +54,16 @@ def _fit_model_worker(
 
     start = pytime.perf_counter()
 
-    if config.use_random_sampling:
+    if config.use_differential_evolution:
+        _, best_result, _ = differential_evolution_search(
+            model_func,
+            time, flux, flux_err,
+            create_params,
+            config.P_published,
+            t0_epoch,
+            verbose=verbose,
+        )
+    elif config.use_random_sampling:
         _, best_result, _ = random_parameter_search(
             model_func,
             time, flux, flux_err,
@@ -77,6 +86,14 @@ def _fit_model_worker(
         )
 
     elapsed = pytime.perf_counter() - start
+
+    # Temporary diagnostic
+    if best_result is not None:
+        period_param = best_result.params.get('period') or best_result.params.get('P1')
+        period_val = period_param.value if period_param is not None else 'fixed'
+        print(f"Model {label}: redchi={best_result.redchi:.3f}, period={period_val}")
+    
+
     return label, best_result, elapsed
 
 
@@ -153,6 +170,7 @@ class ModelFitter:
             print(lmfit.report_fit(best_result))
 
         self.results[label] = best_result
+        
         return best_result
 
     def fit_all_models(

@@ -10,7 +10,7 @@
 # summary and BIC heatmap showing all modes together.
 
 [data]
-input_path = "./examples/example_input.h5"
+input_path = "/Users/rqy2qb/Library/CloudStorage/OneDrive-Personal/Documents/Research/DBL_PC_TSO_package/tests/single_sine_wave/single_sine_wave_input.csv"
 object_name = "ZTFJ0038+2030"
 instrument = "PRISM"
 

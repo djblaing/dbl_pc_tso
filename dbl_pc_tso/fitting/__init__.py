@@ -13,4 +13,5 @@ __all__ = [
     'residual_wrapper',
     'random_parameter_search',
     'grid_parameter_search',
+    'differential_evolution_search',
 ]

@@ -34,8 +34,8 @@ regions = [
 ]
 
 [fitting]
-method = "leastsq"
-n_trials = 500 # not used for differential evolution I think
+method = "powell"
+n_trials = 2000 # not used for differential evolution I think
 use_random_sampling = true
 use_differential_evolution = false # this doesn't work
 

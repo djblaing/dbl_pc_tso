@@ -53,6 +53,7 @@ class Config:
         self.fitting_method = fit_section.get('method', 'powell')
         self.n_trials = fit_section.get('n_trials', 2000)
         self.use_random_sampling = fit_section.get('use_random_sampling', True)
+        self.use_differential_evolution = fit_section.get('use_differential_evolution', False)
         
         # Output options
         out_section = config_dict.get('output', {})
