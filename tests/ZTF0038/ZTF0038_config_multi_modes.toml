@@ -1,0 +1,48 @@
+# Example: Multiple Wavelength Modes
+#
+# This configuration fits Fourier series models using multiple wavelength
+# extraction modes in a single run:
+# - Broadband (averaged flux)
+# - N evenly-spaced bins
+# - Custom regions (user-defined wavelength ranges)
+#
+# All bins from all modes are processed sequentially, with a unified CSV
+# summary and BIC heatmap showing all modes together.
+
+[data]
+input_path = "/Users/rqy2qb/DataAnalysis/JWST/ZTFJ0038+2030/ZTFJ0038+2030_Eureka/PRISM/Stage3/S3_2026-01-16_ZTFJ0038+2030_PRISM_run1/ap3_bg4/ZTFJ0038+2030_PRISM_WD_and_BD_phase_spectra.h5"
+object_name = "ZTFJ0038+2030"
+instrument = "PRISM"
+
+[observational_parameters]
+P_published = 0.4319208
+t0_published = 59045.485194
+
+[wavelength_binning]
+# Use multiple modes by specifying an array
+mode = ["broadband", "n_bins", "custom_regions"]
+n_bins = 50
+wave_min = 0.6
+wave_max = 5.3
+
+# Define custom regions when using "custom_regions" mode
+# Format: [["region_name", wave_min, wave_max], ...]
+regions = [["CO2_feature", 4.22, 4.27], ["CO2_shoulder", 4.05, 4.15]]
+
+
+
+[fitting]
+method = "powell"
+n_trials = 100
+use_random_sampling = true
+
+[output]
+output_dir = "./output_multi_modes"
+save_binned_plots = true
+save_bic_table = true
+save_heatmap = true  # Creates 9-bin × 8-model heatmap
+save_best_fit_plot = true
+show_plots = false   # Non-blocking display
+
+[styling]
+theme = "light"

@@ -6,10 +6,11 @@ Coordinates data loading, fitting, and output generation.
 
 from pathlib import Path
 from collections import OrderedDict as OD
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import re
 import numpy as np
 import lmfit
-from typing import Any, Dict, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 
 MinimizerResult = Any
 
@@ -22,6 +23,26 @@ from .plotting.nine_panel import plot_nine_panel
 from .plotting.best_fit import plot_best_fit_standalone
 from .plotting.heatmap import plot_bic_heatmap
 from .summary_table import generate_bic_summary_table, print_bic_summary
+
+
+def _fit_bin_worker(
+    bin_label: str,
+    flux: np.ndarray,
+    flux_err: np.ndarray,
+    time: np.ndarray,
+    config: Config,
+) -> Tuple[str, Dict[str, MinimizerResult]]:
+    """
+    Top-level worker for fitting a single wavelength bin.
+
+    Must be module-level (not a method) so ProcessPoolExecutor can pickle it.
+    Runs models sequentially within the bin — parallelism is across bins,
+    not nested inside fit_all_models, to avoid process pool nesting issues.
+    """
+    fitter = ModelFitter(config)
+    # n_workers=1 disables the inner process pool so we don't nest executors
+    bin_results = fitter.fit_all_models(time, flux, flux_err, verbose=False, n_workers=1)
+    return bin_label, bin_results
 
 
 class Analysis:
@@ -111,24 +132,54 @@ class Analysis:
         time: np.ndarray,
         binned_flux_dict: Dict[str, Tuple[np.ndarray, np.ndarray]]
     ) -> Dict[str, Dict[str, MinimizerResult]]:
-        """Fit all bins."""
-        results = OD()
+        """
+        Fit all bins.
 
+        Strategy:
+        - 1 bin:        parallelise across 8 models (existing behaviour)
+        - multiple bins: parallelise across bins, models run sequentially
+                         inside each bin to avoid nested process pools
+        """
+        results = OD()
         bin_labels = list(binned_flux_dict.keys())
         total_bins = len(bin_labels)
         print(f"Bin progress {self._format_progress_bar(0, total_bins)} 0/{total_bins}")
-        
-        for bin_index, (bin_label, (flux, flux_err)) in enumerate(binned_flux_dict.items(), start=1):
+
+        if total_bins == 1:
+            # Single bin — use inner model-level parallelism as before
+            bin_label, (flux, flux_err) = next(iter(binned_flux_dict.items()))
             print(f"\n  Fitting bin: {bin_label}")
-            
             fitter = ModelFitter(self.config)
             bin_results = fitter.fit_all_models(time, flux, flux_err, verbose=False)
             results[bin_label] = bin_results
-            
-            # Print summary for this bin
             fitter.print_summary()
-            print(f"Bin progress {self._format_progress_bar(bin_index, total_bins)} {bin_index}/{total_bins}")
-        
+            print(f"Bin progress {self._format_progress_bar(1, total_bins)} 1/{total_bins}")
+            return results
+
+        # Multiple bins — parallelise across bins
+        completed: Dict[str, Dict[str, MinimizerResult]] = {}
+
+        with ProcessPoolExecutor() as pool:
+            future_to_label = {
+                pool.submit(
+                    _fit_bin_worker,
+                    bin_label, flux, flux_err, time, self.config,
+                ): bin_label
+                for bin_label, (flux, flux_err) in binned_flux_dict.items()
+            }
+
+            for future in as_completed(future_to_label):
+                bin_label, bin_results = future.result()
+                completed[bin_label] = bin_results
+
+                done_count = len(completed)
+                print(f"  [done] Bin: {bin_label}")
+                print(f"Bin progress {self._format_progress_bar(done_count, total_bins)} {done_count}/{total_bins}")
+
+        # Restore original bin ordering
+        for label in bin_labels:
+            results[label] = completed[label]
+
         return results
     
     def _generate_fit_models(self) -> Dict[str, callable]:

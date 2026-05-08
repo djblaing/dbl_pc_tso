@@ -22,7 +22,7 @@ t0_published = "none"
 # Use multiple modes by specifying an array
 mode = ["broadband", "n_bins", "custom_regions"]
 n_bins = 2
-wave_min = 4.5
+wave_min = 4.0
 wave_max = 5.0
 
 # Define custom regions when using "custom_regions" mode

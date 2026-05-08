@@ -252,9 +252,14 @@ class DataLoader:
         """
         result = {}
         for label, wave_min, wave_max in bins:
-            flux, flux_err = self.extract_wavelength_bin_flux(
-                flux_2d, flux_err_2d, wavelengths, wave_min, wave_max
-            )
+            if label == 'Broadband':
+                flux, flux_err = self.extract_broadband_flux(
+                    flux_2d, flux_err_2d, wavelengths
+                )
+            else:
+                flux, flux_err = self.extract_wavelength_bin_flux(
+                    flux_2d, flux_err_2d, wavelengths, wave_min, wave_max
+                )
             result[label] = (flux, flux_err)
         return result
     
